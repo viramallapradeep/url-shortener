@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 import com.urlshortener.entity.UrlMapping;
 import com.urlshortener.repository.UrlMappingRepository;
-import com.urlshortener.util.Base62Encoder;
 
 @Service
 public class UrlShortenerService {
@@ -19,17 +18,10 @@ public class UrlShortenerService {
 
     // 1️ Create short URL
     public UrlMapping shortenUrl(String longUrl) {
+        String shortKey = generateShortKey();
 
-        // Step 1: save without shortKey
-        UrlMapping mapping = new UrlMapping(null, longUrl);
-        UrlMapping saved = repository.save(mapping);
-
-        // Step 2: generate shortKey from ID
-        System.out.println("====ID from DB===="+saved.getId());
-        String shortKey = Base62Encoder.encode(saved.getId());
-        saved.setShortKey(shortKey);
-
-        return repository.save(saved);
+        UrlMapping mapping = new UrlMapping(shortKey, longUrl);
+        return repository.save(mapping);
     }
 
     // 2️⃣ Fetch long URL
