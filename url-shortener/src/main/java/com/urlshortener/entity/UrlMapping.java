@@ -17,7 +17,7 @@ public class UrlMapping {
 @GeneratedValue(strategy = GenerationType.IDENTITY)
 private Long id;	
 
-@Column(name = "short_key", nullable = false, unique = true, length = 10)
+@Column(name = "short_key", unique = true, length = 10)
 private String shortKey;
 
 @Column(name = "long_url",nullable = false,length = 2048)
@@ -48,6 +48,10 @@ public String getLongUrl() {
 
 public LocalDateTime getCreatedAt() {
     return createdAt;
+}
+
+public void setShortKey(String shortKey) {
+    this.shortKey = shortKey;
 }
 	
 }
