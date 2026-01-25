@@ -31,10 +31,10 @@ public class UrlShortenerController {
     // Redirect to long URL
     @GetMapping("/goto/{shortKey}")
     public ResponseEntity<Void> redirect(@PathVariable String shortKey) {
-        UrlMapping mapping = service.getLongUrl(shortKey);
+        String longUrl = service.getLongUrl(shortKey);
         return ResponseEntity
                 .status(302)
-                .location(URI.create(mapping.getLongUrl()))
+                .location(URI.create(longUrl))
                 .build();
     }
 }
