@@ -37,19 +37,32 @@ public class UrlShortenerService {
     }
 
     public String getLongUrl(String shortKey) {
-    	String cachedUrl = redisTemp.opsForValue().get(shortKey);
+    	String cachedUrl = null;
+    	
+    	try {
+    		cachedUrl=redisTemp.opsForValue().get(shortKey);
+		} catch (Exception e) {
+			System.out.println("===cache is down, falling back to DB===");
+		}
+    			
+    			
     	if(cachedUrl!=null) {
-    		System.out.println("====cachedUrl from redis cache===="+cachedUrl);
+    		System.out.println("====Fetched from redis cache===="+cachedUrl);
     		return cachedUrl;
     	}
     	
     	 UrlMapping mapping = repository.findByShortKey(shortKey)
                 .orElseThrow(() -> new RuntimeException("Short URL not found"));
     	 
-    	 System.out.println("====URl from DB===="+mapping.getLongUrl());
+    	 System.out.println("====Fetched from DB===="+mapping.getLongUrl());
         
-        redisTemp.opsForValue()
-        .set(shortKey, mapping.getLongUrl(),Duration.ofHours(24));
+    	 try {
+    		 System.out.println("====Writing to cache===="+mapping.getLongUrl());
+    		 redisTemp.opsForValue()
+    		 .set(shortKey, mapping.getLongUrl(),Duration.ofHours(24));
+		} catch (Exception e) {
+			//writing to cache
+		}
         
         return mapping.getLongUrl();
     }
