@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -14,7 +12,7 @@ import jakarta.persistence.Table;
 public class UrlMapping {
 
 @Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
+//@GeneratedValue(strategy = GenerationType.IDENTITY)
 private Long id;	
 
 @Column(name = "short_key", unique = true, length = 10)
@@ -28,7 +26,8 @@ private LocalDateTime createdAt;
 
 protected UrlMapping() {}
 
-public UrlMapping(String shortKey, String longUrl) {
+public UrlMapping(Long id,String shortKey, String longUrl) {
+	this.id=id;
     this.shortKey = shortKey;
     this.longUrl = longUrl;
     this.createdAt = LocalDateTime.now();

@@ -1,7 +1,6 @@
 package com.urlshortener.service;
 
 import java.time.Duration;
-import java.util.UUID;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.urlshortener.entity.UrlMapping;
 import com.urlshortener.repository.UrlMappingRepository;
 import com.urlshortener.util.Base62Encoder;
+import com.urlshortener.util.SnowflakeIdGenerator;
 
 @Service
 public class UrlShortenerService {
@@ -23,17 +23,15 @@ public class UrlShortenerService {
     }
 
     public UrlMapping shortenUrl(String longUrl) {
-
-        // Step 1: save without shortKey
-        UrlMapping mapping = new UrlMapping(null, longUrl);
+    	SnowflakeIdGenerator idGen = new SnowflakeIdGenerator(1);
+    	long id = idGen.nextId();
+    	System.out.println("====Snowflake ID===="+id);
+    	String shortKey = Base62Encoder.encode(id);
+        UrlMapping mapping = new UrlMapping(id,shortKey, longUrl);
         UrlMapping saved = repository.save(mapping);
+        System.out.println("====shortKey ID===="+shortKey);
 
-        // Step 2: generate shortKey from ID
-        System.out.println("====ID from DB===="+saved.getId());
-        String shortKey = Base62Encoder.encode(saved.getId());
-        saved.setShortKey(shortKey);
-
-        return repository.save(saved);
+        return saved;
     }
 
     public String getLongUrl(String shortKey) {
@@ -65,9 +63,5 @@ public class UrlShortenerService {
 		}
         
         return mapping.getLongUrl();
-    }
-
-    private String generateShortKey() {
-        return UUID.randomUUID().toString().substring(0, 8);
     }
 }
