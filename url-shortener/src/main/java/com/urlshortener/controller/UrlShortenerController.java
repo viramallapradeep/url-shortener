@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.urlshortener.entity.UrlMapping;
-import com.urlshortener.service.RateLimiterService;
+import com.urlshortener.ratelimiter.TokenBucketRateLimiter;
 import com.urlshortener.service.UrlShortenerService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +19,14 @@ import jakarta.servlet.http.HttpServletRequest;
 public class UrlShortenerController {
 
     private final UrlShortenerService urlShortService;
-    private final RateLimiterService ratelimService;
+  //  private final RateLimiterService ratelimService;
+    private final TokenBucketRateLimiter tokBucLimiter;
+    
+    
 
-    public UrlShortenerController(UrlShortenerService service,RateLimiterService ratelimService) {
+    public UrlShortenerController(UrlShortenerService service,TokenBucketRateLimiter tokBucLimiter) {
         this.urlShortService = service;
-        this.ratelimService=ratelimService;
+        this.tokBucLimiter=tokBucLimiter;
     }
 
     // Create short URL
@@ -36,9 +39,23 @@ public class UrlShortenerController {
     // Redirect to long URL
     @GetMapping("/goto/{shortKey}")
     public ResponseEntity<Void> redirect(@PathVariable String shortKey,HttpServletRequest request) {
-    	String ipAdd=request.getRemoteAddr();
-    	if(!ratelimService.isAllowed(ipAdd)) {
-    		return ResponseEntity.status(429).build();
+    	String ip=request.getRemoteAddr();
+    	try {
+    		// 2️ Per-IP rate limit
+    		if (!tokBucLimiter.isAllowed("tb:ip:" + ip, 1, 1)) {
+    			System.out.println("====IP RATE LIMIT HIT for " + ip + "====");
+    			return ResponseEntity.status(429).build();
+    		}
+    		
+    		// 1️ Global rate limit
+	    	if(!tokBucLimiter.isAllowed("tb:global",1,1)) {
+	    		System.out.println("====too many requests====");
+	    		return ResponseEntity.status(429).build();
+	    	}
+	    	
+	    	
+    	}catch(Exception e){
+    		//ignore this
     	}
     	
         String longUrl = urlShortService.getLongUrl(shortKey);
