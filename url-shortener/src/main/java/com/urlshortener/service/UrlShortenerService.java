@@ -17,14 +17,17 @@ public class UrlShortenerService {
     
     private final StringRedisTemplate redisTemp;
 
-    public UrlShortenerService(UrlMappingRepository repository,StringRedisTemplate redisTemp) {
+    private final SnowflakeIdGenerator snowflakeGen;
+    public UrlShortenerService(UrlMappingRepository repository,
+    		                   StringRedisTemplate redisTemp,
+    		                   SnowflakeIdGenerator snowflakeGen) {
         this.repository = repository;
         this.redisTemp=redisTemp;
+        this.snowflakeGen=snowflakeGen;
     }
 
     public UrlMapping shortenUrl(String longUrl) {
-    	SnowflakeIdGenerator idGen = new SnowflakeIdGenerator(1);
-    	long id = idGen.nextId();
+    	long id = snowflakeGen.nextId();
     	System.out.println("====Snowflake ID===="+id);
     	String shortKey = Base62Encoder.encode(id);
         UrlMapping mapping = new UrlMapping(id,shortKey, longUrl);
