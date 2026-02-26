@@ -22,7 +22,13 @@ public class UrlShortenerController {
   //  private final RateLimiterService ratelimService;
     private final TokenBucketRateLimiter tokBucLimiter;
     
-    
+    private String getClientIp(HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isEmpty()) {
+            return xff.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
 
     public UrlShortenerController(UrlShortenerService service,TokenBucketRateLimiter tokBucLimiter) {
         this.urlShortService = service;
@@ -39,23 +45,24 @@ public class UrlShortenerController {
     // Redirect to long URL
     @GetMapping("/goto/{shortKey}")
     public ResponseEntity<Void> redirect(@PathVariable String shortKey,HttpServletRequest request) {
-    	String ip=request.getRemoteAddr();
+    	String ip=getClientIp(request);
     	try {
-    		// 2️ Per-IP rate limit
-    		if (!tokBucLimiter.isAllowed("tb:ip:" + ip, 1, 1)) {
-    			System.out.println("====IP RATE LIMIT HIT for " + ip + "====");
+    		// 1️ Global rate limit
+    		if(!tokBucLimiter.isAllowed("tb:global",1,100)) {
+    			//System.out.println("====too many requests====");
     			return ResponseEntity.status(429).build();
     		}
     		
-    		// 1️ Global rate limit
-	    	if(!tokBucLimiter.isAllowed("tb:global",1,1)) {
-	    		System.out.println("====too many requests====");
-	    		return ResponseEntity.status(429).build();
-	    	}
+    		// 2️ Per-IP rate limit
+    		if (!tokBucLimiter.isAllowed("tb:ip:" + ip, 1, 20)) {
+    			//System.out.println("====IP RATE LIMIT HIT for " + ip + "====");
+    			return ResponseEntity.status(429).build();
+    		}
+    		
 	    	
 	    	
     	}catch(Exception e){
-    		//ignore this
+    		//limiterAvailable = false;
     	}
     	
         String longUrl = urlShortService.getLongUrl(shortKey);
