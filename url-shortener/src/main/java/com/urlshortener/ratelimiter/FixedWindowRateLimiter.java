@@ -19,7 +19,7 @@ public class FixedWindowRateLimiter implements RateLimiter {
 
 	    @Override
 	    public boolean allowRequest(String key) {
-
+	    	System.out.println("FixedWindow=====allowRequest");
 	        String redisKey = "rate:fixed:" + key;
 
 	        Long count = redisTemplate.opsForValue().increment(redisKey);
